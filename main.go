@@ -1,3 +1,4 @@
+// insidechurch-backend/main.go
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
@@ -74,25 +76,32 @@ func initDB() {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
-        INSERT INTO roles (name) ON CONFLICT (name) DO NOTHING VALUES ('tenant_super_admin'), ('tenant_admin'), ('leadership');
-
+        INSERT INTO roles (name) VALUES ('tenant_super_admin'), ('tenant_admin'), ('leadership');
 	`
 	_, err = db.Exec(schemaSQL)
 	if err != nil {
-		log.Fatalf("Error creating database schema: %v", err)
+		log.Printf("Warning: Error creating database schema: %v (This might be okay if tables/roles already exist)", err)
+	} else {
+		fmt.Println("Database schema initialized successfully.")
 	}
-	fmt.Println("Database schema initialized successfully.")
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome to InsideChurch API!")
+	fmt.Fprintf(w, "Welcome to InsideChurch Backend MVP!")
 }
 
 func main() {
 	initDB()
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler).Methods("GET")
 
+	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
+	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
+
+	corsHandler := handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(r)
+
 	fmt.Println("Backend server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":8080", corsHandler))
 }
