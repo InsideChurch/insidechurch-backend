@@ -118,6 +118,7 @@ func main() {
 	authRouter.Use(api.AuthMiddleware)
 
 	authRouter.Handle("/tenants", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(tenantHandler.CreateTenant))).Methods("POST")
+	authRouter.Handle("/tenants", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(tenantHandler.ListTenants))).Methods("GET")
 
 	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
