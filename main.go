@@ -107,8 +107,17 @@ func main() {
 	authService := service.NewAuthService(userRepo, jwtSecret)
 	authHandler := api.NewAuthHandler(authService)
 
+	tenantRepo := repository.NewTenantRepository(db)
+	tenantService := service.NewTenantService(tenantRepo)
+	tenantHandler := api.NewTenantHandler(tenantService)
+
 	r.HandleFunc("/", homeHandler).Methods("GET")
 	r.HandleFunc("/login", authHandler.Login).Methods("POST")
+
+	authRouter := r.PathPrefix("/api").Subrouter()
+	authRouter.Use(api.AuthMiddleware)
+
+	authRouter.Handle("/tenants", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(tenantHandler.CreateTenant))).Methods("POST")
 
 	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
