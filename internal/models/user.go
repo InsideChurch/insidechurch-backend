@@ -11,6 +11,7 @@ type User struct {
 	Email              string     `json:"email"`
 	PasswordHash       string     `json:"-"`
 	Name               string     `json:"name"`
+	Role               string     `json:"role"`
 	TenantID           *uuid.UUID `json:"tenant_id,omitempty"`
 	IsGlobalSuperAdmin bool       `json:"is_global_super_admin"`
 	CreatedAt          time.Time  `json:"created_at"`
@@ -23,6 +24,16 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token          string `json:"token"`
+	IsGlobalSuperAdmin bool `json:"is_global_super_admin"`
+	UserEmail      string `json:"user_email"` 
+	UserName       string `json:"user_name"`  
+	UserRole       string `json:"user_role"`
+}
+
+type CreateTenantSuperAdminRequest struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Name     string    `json:"name"`
+	TenantID uuid.UUID `json:"tenant_id"`
 }

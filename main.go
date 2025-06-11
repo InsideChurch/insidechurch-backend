@@ -39,23 +39,24 @@ func initDB() {
 
 	schemaSQL := `
 	    CREATE TABLE IF NOT EXISTS tenants (
-	        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-	        name VARCHAR(255) NOT NULL,
-	        type VARCHAR(50) NOT NULL,
-	        parent_id UUID REFERENCES tenants(id) NULL,
-	        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	    );
-	    CREATE TABLE IF NOT EXISTS users (
-	        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-	        email VARCHAR(255) UNIQUE NOT NULL,
-	        password_hash VARCHAR(255) NOT NULL,
-	        name VARCHAR(255) NOT NULL,
-	        tenant_id UUID REFERENCES tenants(id) NULL,
-	        is_global_super_admin BOOLEAN DEFAULT FALSE,
-	        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-	    );
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) NOT NULL,
+            parent_id UUID REFERENCES tenants(id) NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS users (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL DEFAULT 'tenant_admin',
+            tenant_id UUID REFERENCES tenants(id) NULL,
+            is_global_super_admin BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS roles (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(50) UNIQUE NOT NULL
@@ -119,7 +120,8 @@ func main() {
 
 	authRouter.Handle("/tenants", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(tenantHandler.CreateTenant))).Methods("POST")
 	authRouter.Handle("/tenants", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(tenantHandler.ListTenants))).Methods("GET")
-
+	authRouter.Handle("/users/tenant-super-admin", api.GlobalAdminRequiredMiddleware(http.HandlerFunc(authHandler.CreateTenantSuperAdmin))).Methods("POST")
+	
 	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
 	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
