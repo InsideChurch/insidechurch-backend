@@ -1,4 +1,3 @@
-// insidechurch-backend/main.go
 package main
 
 import (
@@ -11,6 +10,10 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+
+	"insidechurch.com/backend/internal/api"
+	"insidechurch.com/backend/internal/repository"
+	"insidechurch.com/backend/internal/service"
 )
 
 var db *sql.DB
@@ -19,7 +22,7 @@ func initDB() {
 	var err error
 	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
-		log.Fatal("DATABASE_URL environment variable not set")
+		log.Fatal("DATABASE_URL environment variable not set. Please set it in your .env file or environment.")
 	}
 
 	db, err = sql.Open("postgres", connStr)
@@ -94,7 +97,18 @@ func main() {
 	initDB()
 
 	r := mux.NewRouter()
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set. Please set it in your .env file or environment.")
+	}
+
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepo, jwtSecret)
+	authHandler := api.NewAuthHandler(authService)
+
 	r.HandleFunc("/", homeHandler).Methods("GET")
+	r.HandleFunc("/login", authHandler.Login).Methods("POST")
 
 	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
