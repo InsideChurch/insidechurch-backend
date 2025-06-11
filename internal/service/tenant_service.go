@@ -34,7 +34,7 @@ func (s *TenantService) CreateTenant(req *models.CreateTenantRequest) (*models.T
 	return tenant, nil
 }
 
-func (s *TenantService) GetAllTenants() ([]models.Tenant, error) {
+func (s *TenantService) GetAllTenants() ([]models.TenantResponse, error) {
 	tenants, err := s.tenantRepo.GetAllTenants()
 	if err != nil {
 		return nil, fmt.Errorf("service: failed to get all tenants: %w", err)
