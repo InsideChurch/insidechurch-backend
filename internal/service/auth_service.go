@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -25,6 +26,7 @@ func NewAuthService(userRepo *repository.UserRepository, jwtSecret string) *Auth
 }
 
 func (s *AuthService) AuthenticateUser(email, password string) (string, *models.User, error) {
+	log.Printf("Attempting login for email: %s", email)
 	user, err := s.userRepo.GetUserByEmail(email)
 	if err != nil {
 		return "", nil, err
@@ -32,12 +34,13 @@ func (s *AuthService) AuthenticateUser(email, password string) (string, *models.
 	if user == nil {
 		return "", nil, errors.New("invalid credentials")
 	}
-
+	log.Printf("User found: %s, Role: %s, Hashed Password (from DB): %s", user.Email, user.Role, user.PasswordHash)
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		return "", nil, errors.New("invalid credentials")
 	}
 
+	log.Printf("Login successful for email: %s", user.Email)
 	claims := jwt.MapClaims{
 		"user_id":               user.ID,
 		"email":                 user.Email,
@@ -61,6 +64,7 @@ func HashPassword(password string) (string, error) {
 }
 
 func (s *AuthService) Login(email, password string) (string, bool, string, string, string, error) { 
+	
 	user, err := s.userRepo.FindUserByEmail(email)
 	if err != nil {
 		return "", false, "", "", "", fmt.Errorf("service: failed to find user for login: %w", err)
@@ -72,6 +76,8 @@ func (s *AuthService) Login(email, password string) (string, bool, string, strin
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return "", false, "", "", "", errors.New("invalid credentials")
 	}
+
+	log.Printf("Login successful for email: %s", user.Email)
 
 	isGlobalSuperAdmin := user.IsGlobalSuperAdmin 
 

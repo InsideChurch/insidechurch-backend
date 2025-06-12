@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+	"log"
 
 	"github.com/google/uuid"
 	"insidechurch.com/backend/internal/models"
@@ -52,7 +53,7 @@ func (r *UserRepository) FindUserByEmail(email string) (*models.User, error) {
 	var tenantID sql.NullString
     var isGlobalSuperAdmin sql.NullBool
 
-    query := "SELECT id, email, password_hash, role, tenant_id, is_global_super_admin, created_at, updated_at FROM users WHERE email = $1"
+    query := "SELECT id, email, password_hash, name, role, tenant_id, is_global_super_admin, created_at, updated_at FROM users WHERE email = $1"
 	err := r.db.QueryRow(query, email).
 		Scan(
             &user.ID,
